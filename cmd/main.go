@@ -7,6 +7,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/MatTwix/GoTodoAppCli/models"
+	"github.com/mergestat/timediff"
 )
 
 func main() {
@@ -54,12 +55,14 @@ func main() {
 		}
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', tabwriter.AlignRight|tabwriter.Debug)
 
+		fmt.Fprintln(w, "ID\tDone\tCreated\tTask name")
 		for _, task := range todoList.Tasks {
 			status := " "
 			if task.Done {
 				status = "x"
 			}
-			fmt.Fprintln(w, strconv.Itoa(task.ID)+"\t["+status+"]\t"+task.Title)
+			td := timediff.TimeDiff(task.CreatedAt)
+			fmt.Fprintln(w, strconv.Itoa(task.ID)+"\t["+status+"]\t"+td+"\t"+task.Title)
 		}
 		w.Flush()
 	case "done":

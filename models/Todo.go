@@ -5,12 +5,14 @@ import (
 	"os"
 	"slices"
 	"strconv"
+	"time"
 )
 
 type Todo struct {
-	ID    int
-	Title string
-	Done  bool
+	ID        int
+	Title     string
+	CreatedAt time.Time
+	Done      bool
 }
 
 type TodoList struct {
@@ -19,7 +21,7 @@ type TodoList struct {
 
 func (t *TodoList) AddTask(title string) {
 	id := len(t.Tasks) + 1
-	t.Tasks = append(t.Tasks, Todo{ID: id, Title: title, Done: false})
+	t.Tasks = append(t.Tasks, Todo{ID: id, Title: title, CreatedAt: time.Now(), Done: false})
 }
 
 func (t *TodoList) MarkDone(id int) {
@@ -50,7 +52,7 @@ func (t *TodoList) SaveToFile(filename string) error {
 	w := csv.NewWriter(file)
 	defer w.Flush()
 
-	if err := w.Write([]string{"ID", "Title", "Done"}); err != nil {
+	if err := w.Write([]string{"ID", "Title", "CreatedAt", "Done"}); err != nil {
 		return err
 	}
 
@@ -58,6 +60,7 @@ func (t *TodoList) SaveToFile(filename string) error {
 		record := []string{
 			strconv.Itoa(task.ID),
 			task.Title,
+			task.CreatedAt.Format(time.RFC3339),
 			strconv.FormatBool(task.Done),
 		}
 
@@ -92,15 +95,21 @@ func (t *TodoList) ReadFromFile(filename string) error {
 		if err != nil {
 			return err
 		}
-		done, err := strconv.ParseBool(record[2])
+		createdAt, err := time.Parse(time.RFC3339, record[2])
+		if err != nil {
+			return err
+		}
+
+		done, err := strconv.ParseBool(record[3])
 		if err != nil {
 			return err
 		}
 
 		t.Tasks = append(t.Tasks, Todo{
-			ID:    id,
-			Title: record[1],
-			Done:  done,
+			ID:        id,
+			Title:     record[1],
+			CreatedAt: createdAt,
+			Done:      done,
 		})
 	}
 
