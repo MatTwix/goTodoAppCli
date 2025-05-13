@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"text/tabwriter"
 
 	"github.com/MatTwix/GoTodoAppCli/models"
 )
@@ -51,13 +52,16 @@ func main() {
 			fmt.Println("No tasks found.")
 			return
 		}
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', tabwriter.AlignRight|tabwriter.Debug)
+
 		for _, task := range todoList.Tasks {
 			status := " "
 			if task.Done {
 				status = "x"
 			}
-			fmt.Printf("%d: [%s] %s\n", task.ID, status, task.Title)
+			fmt.Fprintln(w, strconv.Itoa(task.ID)+"\t["+status+"]\t"+task.Title)
 		}
+		w.Flush()
 	case "done":
 		if len(os.Args) < 3 {
 			fmt.Println("Usage: go run main.go done <task_id>")
