@@ -1,18 +1,17 @@
 package models
 
 import (
-	"encoding/csv"
+	"encoding/json"
 	"os"
 	"slices"
-	"strconv"
 	"time"
 )
 
 type Todo struct {
-	ID        int
-	Title     string
-	CreatedAt time.Time
-	Done      bool
+	ID        int       `json:"id"`
+	Title     string    `json:"title"`
+	CreatedAt time.Time `json:"created_at"`
+	Done      bool      `json:"done"`
 }
 
 type TodoList struct {
@@ -49,69 +48,26 @@ func (t *TodoList) SaveToFile(filename string) error {
 	}
 	defer file.Close()
 
-	w := csv.NewWriter(file)
-	defer w.Flush()
-
-	if err := w.Write([]string{"ID", "Title", "CreatedAt", "Done"}); err != nil {
-		return err
-	}
-
-	for _, task := range t.Tasks {
-		record := []string{
-			strconv.Itoa(task.ID),
-			task.Title,
-			task.CreatedAt.Format(time.RFC3339),
-			strconv.FormatBool(task.Done),
-		}
-
-		if err := w.Write(record); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	encoder := json.NewEncoder(file)
+	encoder.SetIndent("", " ")
+	return encoder.Encode(t.Tasks)
 }
 
 func (t *TodoList) ReadFromFile(filename string) error {
 	file, err := os.Open(filename)
-	if err != nil {
+	if os.IsNotExist(err) {
+		newFile, createErr := os.Create(filename)
+		if createErr != nil {
+			return createErr
+		}
+		defer newFile.Close()
+		t.Tasks = []Todo{}
+		return nil
+	} else if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	r := csv.NewReader(file)
-	records, err := r.ReadAll()
-	if err != nil {
-		return err
-	}
-
-	t.Tasks = []Todo{}
-	for i, record := range records {
-		if i == 0 {
-			continue // Skip header
-		}
-
-		id, err := strconv.Atoi(record[0])
-		if err != nil {
-			return err
-		}
-		createdAt, err := time.Parse(time.RFC3339, record[2])
-		if err != nil {
-			return err
-		}
-
-		done, err := strconv.ParseBool(record[3])
-		if err != nil {
-			return err
-		}
-
-		t.Tasks = append(t.Tasks, Todo{
-			ID:        id,
-			Title:     record[1],
-			CreatedAt: createdAt,
-			Done:      done,
-		})
-	}
-
-	return nil
+	decoder := json.NewDecoder(file)
+	return decoder.Decode(&t.Tasks)
 }
