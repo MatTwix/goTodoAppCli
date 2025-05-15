@@ -5,6 +5,8 @@ import (
 	"os"
 	"slices"
 	"time"
+
+	"github.com/MatTwix/GoTodoAppCli/iternal"
 )
 
 type Todo struct {
@@ -23,22 +25,36 @@ func (t *TodoList) AddTask(title string) {
 	t.Tasks = append(t.Tasks, Todo{ID: id, Title: title, CreatedAt: time.Now(), Done: false})
 }
 
-func (t *TodoList) MarkDone(id int) {
+func (t *TodoList) MarkDone(id int) error {
+	flag := false
 	for i, task := range t.Tasks {
 		if task.ID == id {
 			t.Tasks[i].Done = true
+			flag = true
 			break
 		}
 	}
+
+	if !flag {
+		return &iternal.DoesNotExistErr{}
+	}
+	return nil
 }
 
-func (t *TodoList) DeleteTask(id int) {
+func (t *TodoList) DeleteTask(id int) error {
+	flag := false
 	for i, task := range t.Tasks {
 		if task.ID == id {
 			t.Tasks = slices.Delete(t.Tasks, i, i+1)
+			flag = true
 			break
 		}
 	}
+
+	if !flag {
+		return &iternal.DoesNotExistErr{}
+	}
+	return nil
 }
 
 func (t *TodoList) SaveToFile(filename string) error {
