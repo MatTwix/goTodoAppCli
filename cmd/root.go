@@ -3,6 +3,7 @@ package cmd
 import (
 	"log"
 
+	"github.com/MatTwix/GoTodoAppCli/iternal"
 	"github.com/spf13/cobra"
 )
 
@@ -19,5 +20,5 @@ var rootCmd = &cobra.Command{
 
 func Execute() {
 	err := rootCmd.Execute()
-	HandleError(err, "Error executing command")
+	iternal.HandleError(err, "Error executing command")
 }
